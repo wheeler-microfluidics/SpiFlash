@@ -1,6 +1,16 @@
 #include "SpiFlash.h"
 
+void SpiFlash::deselect_chip() {
+  SPI.endTransaction();
+  digitalWrite(cs_pin_, HIGH);
+}
+void SpiFlash::select_chip() {
+  digitalWrite(cs_pin_, LOW);
+  SPI.beginTransaction(spi_settings_);
+}
+
 void SpiFlash::begin() {
+  pinMode(10, OUTPUT);
   pinMode(cs_pin_, OUTPUT);
 
   select_chip();
@@ -14,6 +24,10 @@ void SpiFlash::begin() {
 void SpiFlash::begin(uint8_t cs_pin) {
   cs_pin_ = cs_pin;
   begin();
+}
+
+void SpiFlash::set_spi_settings(SPISettings const &spi_settings) {
+  spi_settings_ = spi_settings;
 }
 
 /*
@@ -49,6 +63,8 @@ uint8_t SpiFlash::status_register2() {
   deselect_chip();
   return status;
 }
+
+bool SpiFlash::ready() { return !(status_register1() & STATUS__BUSY); }
 
 bool SpiFlash::ready_wait(uint32_t timeout) {
   uint32_t start = millis();

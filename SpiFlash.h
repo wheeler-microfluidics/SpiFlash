@@ -69,11 +69,12 @@
 class SpiFlash {
 protected:
   uint8_t ERROR_CODE_;
+  SPISettings spi_settings_;
 
   bool disable_write();
   bool enable_write();
-  void deselect_chip() { digitalWrite(cs_pin_, HIGH); }
-  void select_chip() { digitalWrite(cs_pin_, LOW); }
+  void deselect_chip();
+  void select_chip();
   void set_error(uint8_t error_code) { ERROR_CODE_ = error_code; }
 public:
   /* See "6.2.2 Instruction Set Table 1" in [datasheet][1] (or in summary
@@ -114,10 +115,11 @@ public:
   uint8_t error_code() const { return ERROR_CODE_; }
   void clear_error() { set_error(0); }
 
+  void set_spi_settings(SPISettings const &spi_settings);
   uint8_t status_register1();
   uint8_t status_register2();
 
-  bool ready() { return !(status_register1() & STATUS__BUSY); }
+  bool ready();
   bool ready_wait(uint32_t timeout=100L);
 
   bool read(uint32_t address, uint8_t *dst, uint32_t length);
