@@ -156,41 +156,11 @@ public:
   void reset();
 
   // Return from standby mode (i.e., restore after call to `power_down()`).
-  void release_powerdown() {
-    select_chip();
-    transfer(INSTR__RELEASE_POWERDOWN_ID);
-    deselect_chip();
-
-    /* Wait for chip to "wake up".
-     *
-     * According to `tRES2` "7.6 AC Electrical Characteristics" in [`w25q64v`
-     * datasheet][1], this can take up to 3 microseconds.
-     *
-     * [1]: https://cdn.sparkfun.com/datasheets/Dev/Teensy/w25q64fv.pdf
-     */
-    delayMicroseconds(3);
-  }
+  void release_powerdown();
 
   /* Return from standby mode and read device ID (i.e., restore after call to
    * `power_down()`). */
-  void release_powerdown_id() {
-    select_chip();
-    transfer(INSTR__RELEASE_POWERDOWN_ID);
-    transfer(SPI__DUMMY);
-    transfer(SPI__DUMMY);
-    transfer(SPI__DUMMY);
-    uint8_t device_id = transfer(SPI__DUMMY);
-    deselect_chip();
-
-    /* Wait for chip to "wake up".
-     *
-     * According to `tRES2` "7.6 AC Electrical Characteristics" in [`w25q64v`
-     * datasheet][1], this can take up to 3 microseconds.
-     *
-     * [1]: https://cdn.sparkfun.com/datasheets/Dev/Teensy/w25q64fv.pdf
-     */
-    delayMicroseconds(3);
-  }
+  uint8_t release_powerdown_id();
 };
 
 
