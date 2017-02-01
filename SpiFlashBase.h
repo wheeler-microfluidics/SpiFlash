@@ -104,6 +104,7 @@ public:
   static const uint8_t INSTR__BLOCK_ERASE_32KB_      = 0x52;
   static const uint8_t INSTR__BLOCK_ERASE_64KB_      = 0xD8;
   static const uint8_t INSTR__POWER_DOWN             = 0xB9;
+  static const uint8_t INSTR__RELEASE_POWERDOWN_ID   = 0xAB;
 
   /* See "Figure 4a. Status Register-1" in [datasheet][1].
    *
@@ -153,6 +154,43 @@ public:
   bool erase_block_64KB(uint32_t address);
   void power_down();
   void reset();
+
+  // Return from standby mode (i.e., restore after call to `power_down()`).
+  void release_powerdown() {
+    select_chip();
+    transfer(INSTR__RELEASE_POWERDOWN_ID);
+    deselect_chip();
+
+    /* Wait for chip to "wake up".
+     *
+     * According to `tRES2` "7.6 AC Electrical Characteristics" in [`w25q64v`
+     * datasheet][1], this can take up to 3 microseconds.
+     *
+     * [1]: https://cdn.sparkfun.com/datasheets/Dev/Teensy/w25q64fv.pdf
+     */
+    delayMicroseconds(3);
+  }
+
+  /* Return from standby mode and read device ID (i.e., restore after call to
+   * `power_down()`). */
+  void release_powerdown_id() {
+    select_chip();
+    transfer(INSTR__RELEASE_POWERDOWN_ID);
+    transfer(SPI__DUMMY);
+    transfer(SPI__DUMMY);
+    transfer(SPI__DUMMY);
+    uint8_t device_id = transfer(SPI__DUMMY);
+    deselect_chip();
+
+    /* Wait for chip to "wake up".
+     *
+     * According to `tRES2` "7.6 AC Electrical Characteristics" in [`w25q64v`
+     * datasheet][1], this can take up to 3 microseconds.
+     *
+     * [1]: https://cdn.sparkfun.com/datasheets/Dev/Teensy/w25q64fv.pdf
+     */
+    delayMicroseconds(3);
+  }
 };
 
 
