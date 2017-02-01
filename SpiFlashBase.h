@@ -95,6 +95,7 @@ public:
   static const uint8_t INSTR__WRITE_ENABLE           = 0x06;
 
   static const uint8_t INSTR__JEDEC_ID = 0x9F;
+  static const uint8_t INSTR__READ_UNIQUE_ID = 0x4B;
 
   /* See "Figure 4a. Status Register-1" in [datasheet][1].
    *
@@ -137,6 +138,24 @@ public:
   bool write_page(uint32_t address, UInt8Array src);
 
   uint32_t jedec_id();
+
+  uint64_t read_unique_id() {
+    select_chip();
+    transfer(INSTR__READ_UNIQUE_ID);
+    transfer(SPI__DUMMY);
+    transfer(SPI__DUMMY);
+    transfer(SPI__DUMMY);
+    transfer(SPI__DUMMY);
+
+    uint64_t result = 0;
+
+    for (int i = sizeof(uint64_t) - 1; i >= 0; i--) {
+      result |= transfer(SPI__DUMMY) << (8 * i);
+    }
+
+    deselect_chip();
+    return result;
+  }
 };
 
 
