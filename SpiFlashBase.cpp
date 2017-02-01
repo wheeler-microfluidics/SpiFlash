@@ -150,14 +150,20 @@ bool SpiFlashBase::erase_chip() {
   //  2. Send `Chip erase`
   transfer(INSTR__CHIP_ERASE);
   deselect_chip();
-  /*  3. Wait for up to 60s for erase to complete.
+  /*  3. Wait for erase to complete (up to 100 seconds).
+   *
+   *     According to "7.6 AC Electrical Characteristics" in
+   *     [`w25q64v` datasheet][1], this can take up to 100
+   *     seconds.
    *
    * Notes:
    *
    *  - `BUSY` bit in status register remains set until erase is complete.
    *  - Write enable bit in status register is cleared upon erase completion.
+   *
+   * [1]: https://cdn.sparkfun.com/datasheets/Dev/Teensy/w25q64fv.pdf
    */
-  if (!ready_wait(60000L /* 60 seconds */)) {
+  if (!ready_wait(100000L /* 100 seconds */)) {
     disable_write();
     return false;
   }
@@ -197,14 +203,20 @@ bool SpiFlashBase::write_page(uint32_t address, uint8_t *src, uint32_t length) {
   }
   //  5. Deselect chip
   deselect_chip();
-  /*  6. Wait for up to 100ms for write to complete.
+  /*  6. Wait for page program to complete (up to 3 milliseconds).
+   *
+   *     According to "7.6 AC Electrical Characteristics" in
+   *     [`w25q64v` datasheet][1], this can take up to 3
+   *     milliseconds.
    *
    * Notes:
    *
    *  - `BUSY` bit in status register remains set until write is complete.
    *  - Write enable bit in status register is cleared upon write completion.
+   *
+   * [1]: https://cdn.sparkfun.com/datasheets/Dev/Teensy/w25q64fv.pdf
    */
-  if (!ready_wait(100)) {
+  if (!ready_wait(3)) {
     disable_write();
     return false;
   }
