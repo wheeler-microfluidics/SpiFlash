@@ -78,33 +78,7 @@ protected:
 
   void set_error(uint8_t error_code) { ERROR_CODE_ = error_code; }
 
-  bool erase(uint32_t address, uint8_t code, uint32_t settling_time_ms) {
-    if (!ready_wait() || !enable_write()) { return false; }
-
-    select_chip();
-    transfer(address >> (2 * 8));
-    transfer(address >> (1 * 8));
-    transfer(address);
-    deselect_chip();
-
-    /* Wait for sector erase to complete.
-     *
-     * Refer to "7.6 AC Electrical Characteristics" in [`w25q64v`
-     * datasheet][1] for timings.
-     *
-     * Notes:
-     *
-     *  - `BUSY` bit in status register remains set until write is complete.
-     *  - Write enable bit in status register is cleared upon write completion.
-     *
-     * [1]: https://cdn.sparkfun.com/datasheets/Dev/Teensy/w25q64fv.pdf
-     */
-    if (!ready_wait(settling_time_ms)) {
-      disable_write();
-      return false;
-    }
-    return true;
-  }
+  bool erase(uint32_t address, uint8_t code, uint32_t settling_time_ms);
 public:
   static const uint8_t SPI__DUMMY             = 0x00;
 
@@ -175,48 +149,9 @@ public:
   uint32_t jedec_id();
   uint64_t read_unique_id();
   uint8_t read_sfdp_register(uint8_t address);
-
-  bool erase_sector(uint32_t address) {
-    /* **TODO** **TODO** **TODO** **TODO** **TODO** **TODO** **TODO** **TODO**
-     *
-     * What happens if address does not align with a sector boundary??
-     *
-     * **TODO** **TODO** **TODO** **TODO** **TODO** **TODO** **TODO** **TODO**
-     */
-    /* Wait for sector erase to complete (up to [400 milliseconds][1]).
-     *
-     * [1]: https://cdn.sparkfun.com/datasheets/Dev/Teensy/w25q64fv.pdf
-     */
-    return erase(address, INSTR__SECTOR_ERASE_4KB_, 400);
-  }
-
-  bool erase_block_32KB(uint32_t address) {
-    /* **TODO** **TODO** **TODO** **TODO** **TODO** **TODO** **TODO** **TODO**
-     *
-     * What happens if address does not align with a 32KB block boundary??
-     *
-     * **TODO** **TODO** **TODO** **TODO** **TODO** **TODO** **TODO** **TODO**
-     */
-    /* Wait for sector erase to complete (up to [1600 milliseconds][1]).
-     *
-     * [1]: https://cdn.sparkfun.com/datasheets/Dev/Teensy/w25q64fv.pdf
-     */
-    return erase(address, INSTR__BLOCK_ERASE_32KB_, 1600L);
-  }
-
-  bool erase_block_64KB(uint32_t address) {
-    /* **TODO** **TODO** **TODO** **TODO** **TODO** **TODO** **TODO** **TODO**
-     *
-     * What happens if address does not align with a 64KB block boundary??
-     *
-     * **TODO** **TODO** **TODO** **TODO** **TODO** **TODO** **TODO** **TODO**
-     */
-    /* Wait for sector erase to complete (up to [2000 milliseconds][1]).
-     *
-     * [1]: https://cdn.sparkfun.com/datasheets/Dev/Teensy/w25q64fv.pdf
-     */
-    return erase(address, INSTR__BLOCK_ERASE_64KB_, 2000L);
-  }
+  bool erase_sector(uint32_t address);
+  bool erase_block_32KB(uint32_t address);
+  bool erase_block_64KB(uint32_t address);
 };
 
 
