@@ -152,6 +152,7 @@ public:
   bool erase_block_32KB(uint32_t address);
   bool erase_block_64KB(uint32_t address);
   void power_down();
+  void reset();
 };
 
 

@@ -357,3 +357,27 @@ void SpiFlashBase::power_down() {
   transfer(INSTR__POWER_DOWN);
   deselect_chip();
 }
+
+void SpiFlashBase::reset() {
+  /* From section 6.2.43 in [`w25q64v` datasheet][1]:
+   *
+   * > To avoid accidental reset, both instructions must be issued in
+   * > sequence. Any other commands other than “Reset (99h)” after the
+   * > “Enable Reset (66h)” command will disable the “Reset Enable”
+   * > state.
+   * >
+   * > A new sequence of “Enable Reset (66h)” and “Reset (99h)” is
+   * > needed to reset the device. Once the Reset command is accepted
+   * > by the device, the device will take approximately ... 30us to
+   * > reset. During this period, no command will be accepted.
+   */
+  // Enable reset (must be done immediately before requesting reset).
+  select_chip();
+  transfer(INSTR__ENABLE_RESET);
+  deselect_chip();
+
+  // Request reset.
+  select_chip();
+  transfer(INSTR__RESET);
+  deselect_chip();
+}
