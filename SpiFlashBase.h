@@ -82,6 +82,17 @@ protected:
 public:
   static const uint8_t SPI__DUMMY             = 0x00;
 
+  // **TODO** Add support for the following instructions as needed.
+  //static const uint8_t INSTR__ENABLE_QPI = 0x38;
+  //static const uint8_t INSTR__ERASE_PROGRAM_RESUME = 0x7A;
+  //static const uint8_t INSTR__ERASE_PROGRAM_SUSPEND = 0x75;
+  //static const uint8_t INSTR__ERASE_SECURITY_REGISTERS = 0x44;
+  //static const uint8_t INSTR__FAST_READ = 0x0B;
+  //static const uint8_t INSTR__PROGRAM_SECURITY_REGISTERS = 0x42;
+  //static const uint8_t INSTR__READ_SECURITY_REGISTERS = 0x48;
+  //static const uint8_t INSTR__VOLATILE_SR_WRITE_ENABLE = 0x50;
+  //static const uint8_t INSTR__WRITE_STATUS_REGISTER = 0x01;
+
   /* See "6.2.2 Instruction Set Table 1" in [datasheet][1] (or in summary
    * above).
    *
