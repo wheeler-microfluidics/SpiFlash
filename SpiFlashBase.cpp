@@ -226,3 +226,20 @@ bool SpiFlashBase::write_page(uint32_t address, uint8_t *src, uint32_t length) {
 bool SpiFlashBase::write_page(uint32_t address, UInt8Array src) {
   return write_page(address, src.data, src.length);
 }
+
+uint32_t SpiFlashBase::jedec_id() {
+  select_chip();
+  transfer(INSTR__JEDEC_ID);
+  uint32_t result = 0;
+  uint8_t *result_bytes = reinterpret_cast<uint8_t *>(&result);
+  uint8_t &manufacturer = result_bytes[1];
+  uint8_t &memory_type = result_bytes[2];
+  uint8_t &capacity = result_bytes[3];
+
+  manufacturer = transfer(SPI__DUMMY);
+  memory_type = transfer(SPI__DUMMY);
+  capacity = transfer(SPI__DUMMY);
+
+  deselect_chip();
+  return result;
+}
