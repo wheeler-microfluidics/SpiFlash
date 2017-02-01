@@ -78,6 +78,9 @@ protected:
   void deselect_chip();
   void select_chip();
   void set_error(uint8_t error_code) { ERROR_CODE_ = error_code; }
+  uint8_t transfer(uint8_t value) {
+    soft_spi_.transfer(value);
+  }
 public:
   /* See "6.2.2 Instruction Set Table 1" in [datasheet][1] (or in summary
    * above).
@@ -151,10 +154,10 @@ void SpiFlashBase<MisoPin, MosiPin, SckPin, Mode>::begin() {
   soft_spi_.begin();
 
   select_chip();
-  soft_spi_.transfer(INSTR__MANUFACTURER_DEVICE_ID);
-  for (int i = 0; i < 3; i++) { soft_spi_.transfer(0); }
-  manufacturer_id_ = soft_spi_.transfer(0);
-  device_id_ = soft_spi_.transfer(0);
+  transfer(INSTR__MANUFACTURER_DEVICE_ID);
+  for (int i = 0; i < 3; i++) { transfer(0); }
+  manufacturer_id_ = transfer(0);
+  device_id_ = transfer(0);
   deselect_chip();
 }
 
@@ -176,8 +179,8 @@ void SpiFlashBase<MisoPin, MosiPin, SckPin, Mode>::begin(uint8_t cs_pin) {
 template<uint8_t MisoPin, uint8_t MosiPin, uint8_t SckPin, uint8_t Mode>
 uint8_t SpiFlashBase<MisoPin, MosiPin, SckPin, Mode>::status_register1() {
   select_chip();
-  soft_spi_.transfer(INSTR__READ_STATUS_REGISTER_1);
-  uint8_t status = soft_spi_.transfer(0);
+  transfer(INSTR__READ_STATUS_REGISTER_1);
+  uint8_t status = transfer(0);
   deselect_chip();
   return status;
 }
@@ -194,8 +197,8 @@ uint8_t SpiFlashBase<MisoPin, MosiPin, SckPin, Mode>::status_register1() {
 template<uint8_t MisoPin, uint8_t MosiPin, uint8_t SckPin, uint8_t Mode>
 uint8_t SpiFlashBase<MisoPin, MosiPin, SckPin, Mode>::status_register2() {
   select_chip();
-  soft_spi_.transfer(INSTR__READ_STATUS_REGISTER_2);
-  uint8_t status = soft_spi_.transfer(0);
+  transfer(INSTR__READ_STATUS_REGISTER_2);
+  uint8_t status = transfer(0);
   deselect_chip();
   return status;
 }
@@ -233,15 +236,15 @@ bool SpiFlashBase<MisoPin, MosiPin, SckPin, Mode>
   select_chip();
   /*  3. Send `Read Data`
    *      * Shift out: `[0x03]` */
-  soft_spi_.transfer(INSTR__READ_DATA);
+  transfer(INSTR__READ_DATA);
   //      * Shift out: `[A23-A16][A15-A8][A7-A0]`
-  soft_spi_.transfer(address >> (2 * 8));  // A23-A16
-  soft_spi_.transfer(address >> (1 * 8));  // A15-A8
-  soft_spi_.transfer(address);  // A7-A0
+  transfer(address >> (2 * 8));  // A23-A16
+  transfer(address >> (1 * 8));  // A15-A8
+  transfer(address);  // A7-A0
   //  4. Shift out `[0xXX]`, shift in value
   //  5. Repeat 4 to read bytes as needed.
   for (uint32_t i = 0; i < length; i++) {
-    dst[i] = soft_spi_.transfer(0);
+    dst[i] = transfer(0);
   }
   //  6. Deselect chip
   deselect_chip();
@@ -273,7 +276,7 @@ uint8_t SpiFlashBase<MisoPin, MosiPin, SckPin, Mode>::read(uint32_t address) {
 template<uint8_t MisoPin, uint8_t MosiPin, uint8_t SckPin, uint8_t Mode>
 bool SpiFlashBase<MisoPin, MosiPin, SckPin, Mode>::enable_write() {
   select_chip();
-  soft_spi_.transfer(INSTR__WRITE_ENABLE);
+  transfer(INSTR__WRITE_ENABLE);
   deselect_chip();
   // Verify expected state of write enable bit in status register.
   return status_register1() & STATUS__WRITE_ENABLE;
@@ -285,7 +288,7 @@ bool SpiFlashBase<MisoPin, MosiPin, SckPin, Mode>::enable_write() {
 template<uint8_t MisoPin, uint8_t MosiPin, uint8_t SckPin, uint8_t Mode>
 bool SpiFlashBase<MisoPin, MosiPin, SckPin, Mode>::disable_write() {
   select_chip();
-  soft_spi_.transfer(INSTR__WRITE_DISABLE);
+  transfer(INSTR__WRITE_DISABLE);
   deselect_chip();
   // Verify expected state of write enable bit in status register.
   return !(status_register1() & STATUS__WRITE_ENABLE);
@@ -300,7 +303,7 @@ bool SpiFlashBase<MisoPin, MosiPin, SckPin, Mode>::erase_chip() {
 
   select_chip();
   //  2. Send `Chip erase`
-  soft_spi_.transfer(INSTR__CHIP_ERASE);
+  transfer(INSTR__CHIP_ERASE);
   deselect_chip();
   /*  3. Wait for up to 60s for erase to complete.
    *
@@ -333,10 +336,10 @@ bool SpiFlashBase<MisoPin, MosiPin, SckPin, Mode>
    *      * Shift out: `[0x02]`
    *      * Shift out: `[A23-A16][A15-A8][A7-A0]`
    */
-  soft_spi_.transfer(INSTR__PAGE_PROGRAM);
-  soft_spi_.transfer(address >> (2 * 8));  // A23-A16
-  soft_spi_.transfer(address >> (1 * 8));  // A15-A8
-  soft_spi_.transfer(address);  // A7-A0
+  transfer(INSTR__PAGE_PROGRAM);
+  transfer(address >> (2 * 8));  // A23-A16
+  transfer(address >> (1 * 8));  // A15-A8
+  transfer(address);  // A7-A0
   /*  4. Shift out `N` bytes
    *      * **NOTE** bytes will be written to:
    *
@@ -347,7 +350,7 @@ bool SpiFlashBase<MisoPin, MosiPin, SckPin, Mode>
    *      address must be 256-byte aligned (i.e., `[A7-A0]` must be 0).
    */
   for (uint32_t i = 0; i < length; i++) {
-    soft_spi_.transfer(src[i]);
+    transfer(src[i]);
   }
   //  5. Deselect chip
   deselect_chip();
