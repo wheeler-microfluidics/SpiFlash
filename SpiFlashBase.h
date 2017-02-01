@@ -95,16 +95,14 @@ public:
   static const uint8_t INSTR__READ_STATUS_REGISTER_2 = 0x35;
   static const uint8_t INSTR__WRITE_DISABLE          = 0x04;
   static const uint8_t INSTR__WRITE_ENABLE           = 0x06;
-
-  static const uint8_t INSTR__JEDEC_ID = 0x9F;
-  static const uint8_t INSTR__READ_UNIQUE_ID = 0x4B;
-  static const uint8_t INSTR__READ_SFDP_REGISTER = 0x5A;
-  static const uint8_t INSTR__ENABLE_RESET = 0x66;
-  static const uint8_t INSTR__RESET = 0x99;
-
-  static const uint8_t INSTR__SECTOR_ERASE_4KB_ = 0x20;
-  static const uint8_t INSTR__BLOCK_ERASE_32KB_ = 0x52;
-  static const uint8_t INSTR__BLOCK_ERASE_64KB_ = 0xD8;
+  static const uint8_t INSTR__JEDEC_ID               = 0x9F;
+  static const uint8_t INSTR__READ_UNIQUE_ID         = 0x4B;
+  static const uint8_t INSTR__READ_SFDP_REGISTER     = 0x5A;
+  static const uint8_t INSTR__ENABLE_RESET           = 0x66;
+  static const uint8_t INSTR__RESET                  = 0x99;
+  static const uint8_t INSTR__SECTOR_ERASE_4KB_      = 0x20;
+  static const uint8_t INSTR__BLOCK_ERASE_32KB_      = 0x52;
+  static const uint8_t INSTR__BLOCK_ERASE_64KB_      = 0xD8;
 
   /* See "Figure 4a. Status Register-1" in [datasheet][1].
    *
