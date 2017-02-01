@@ -96,6 +96,7 @@ public:
 
   static const uint8_t INSTR__JEDEC_ID = 0x9F;
   static const uint8_t INSTR__READ_UNIQUE_ID = 0x4B;
+  static const uint8_t INSTR__READ_SFDP_REGISTER = 0x5A;
 
   /* See "Figure 4a. Status Register-1" in [datasheet][1].
    *
@@ -139,6 +140,16 @@ public:
 
   uint32_t jedec_id();
   uint64_t read_unique_id();
+
+  uint8_t read_sfdp_register(uint8_t address) {
+    select_chip();
+    transfer(INSTR__READ_SFDP_REGISTER);
+    transfer(0);
+    transfer(0);
+    uint8_t result = transfer(SPI__DUMMY);
+    deselect_chip();
+    return result;
+  }
 };
 
 
