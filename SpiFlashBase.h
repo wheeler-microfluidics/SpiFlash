@@ -151,25 +151,7 @@ public:
   bool erase_sector(uint32_t address);
   bool erase_block_32KB(uint32_t address);
   bool erase_block_64KB(uint32_t address);
-
-  void power_down() {
-    /*
-     * From section 6.2.28 of the [datasheet][1]:
-     *
-     * > While in the power-down state only the "Release from Power-down
-     * > / Device ID" instruction, which restores the device to normal
-     * > operation, will be recognized.
-     * >
-     * > **All other instructions are ignored.** This includes the Read
-     * > Status Register instruction, which is always available during
-     * > normal operation.
-     *
-     * [1]: https://cdn.sparkfun.com/datasheets/Dev/Teensy/w25q64fv.pdf
-     */
-    select_chip();
-    transfer(INSTR__POWER_DOWN);
-    deselect_chip();
-  }
+  void power_down();
 };
 
 
