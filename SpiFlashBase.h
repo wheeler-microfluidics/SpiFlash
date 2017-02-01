@@ -78,6 +78,8 @@ protected:
 
   void set_error(uint8_t error_code) { ERROR_CODE_ = error_code; }
 public:
+  static const uint8_t SPI__DUMMY             = 0x00;
+
   /* See "6.2.2 Instruction Set Table 1" in [datasheet][1] (or in summary
    * above).
    *
@@ -91,6 +93,8 @@ public:
   static const uint8_t INSTR__READ_STATUS_REGISTER_2 = 0x35;
   static const uint8_t INSTR__WRITE_DISABLE          = 0x04;
   static const uint8_t INSTR__WRITE_ENABLE           = 0x06;
+
+  static const uint8_t INSTR__JEDEC_ID = 0x9F;
 
   /* See "Figure 4a. Status Register-1" in [datasheet][1].
    *
@@ -131,6 +135,23 @@ public:
   bool erase_chip();
   bool write_page(uint32_t address, uint8_t *src, uint32_t length);
   bool write_page(uint32_t address, UInt8Array src);
+
+  uint32_t jedec_id() {
+    select_chip();
+    transfer(INSTR__JEDEC_ID);
+    uint32_t result = 0;
+    uint8_t *result_bytes = reinterpret_cast<uint8_t *>(&result);
+    uint8_t &manufacturer = result_bytes[1];
+    uint8_t &memory_type = result_bytes[2];
+    uint8_t &capacity = result_bytes[3];
+
+    manufacturer = transfer(SPI__DUMMY);
+    memory_type = transfer(SPI__DUMMY);
+    capacity = transfer(SPI__DUMMY);
+
+    deselect_chip();
+    return result;
+  }
 };
 
 
