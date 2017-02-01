@@ -77,7 +77,22 @@ protected:
   virtual uint8_t transfer(uint8_t value) = 0;
 
   void set_error(uint8_t error_code) { ERROR_CODE_ = error_code; }
+
+  bool erase(uint32_t address, uint8_t code, uint32_t settling_time_ms);
 public:
+  static const uint8_t SPI__DUMMY             = 0x00;
+
+  // **TODO** Add support for the following instructions as needed.
+  //static const uint8_t INSTR__ENABLE_QPI = 0x38;
+  //static const uint8_t INSTR__ERASE_PROGRAM_RESUME = 0x7A;
+  //static const uint8_t INSTR__ERASE_PROGRAM_SUSPEND = 0x75;
+  //static const uint8_t INSTR__ERASE_SECURITY_REGISTERS = 0x44;
+  //static const uint8_t INSTR__FAST_READ = 0x0B;
+  //static const uint8_t INSTR__PROGRAM_SECURITY_REGISTERS = 0x42;
+  //static const uint8_t INSTR__READ_SECURITY_REGISTERS = 0x48;
+  //static const uint8_t INSTR__VOLATILE_SR_WRITE_ENABLE = 0x50;
+  //static const uint8_t INSTR__WRITE_STATUS_REGISTER = 0x01;
+
   /* See "6.2.2 Instruction Set Table 1" in [datasheet][1] (or in summary
    * above).
    *
@@ -91,6 +106,16 @@ public:
   static const uint8_t INSTR__READ_STATUS_REGISTER_2 = 0x35;
   static const uint8_t INSTR__WRITE_DISABLE          = 0x04;
   static const uint8_t INSTR__WRITE_ENABLE           = 0x06;
+  static const uint8_t INSTR__JEDEC_ID               = 0x9F;
+  static const uint8_t INSTR__READ_UNIQUE_ID         = 0x4B;
+  static const uint8_t INSTR__READ_SFDP_REGISTER     = 0x5A;
+  static const uint8_t INSTR__ENABLE_RESET           = 0x66;
+  static const uint8_t INSTR__RESET                  = 0x99;
+  static const uint8_t INSTR__SECTOR_ERASE_4KB_      = 0x20;
+  static const uint8_t INSTR__BLOCK_ERASE_32KB_      = 0x52;
+  static const uint8_t INSTR__BLOCK_ERASE_64KB_      = 0xD8;
+  static const uint8_t INSTR__POWER_DOWN             = 0xB9;
+  static const uint8_t INSTR__RELEASE_POWERDOWN_ID   = 0xAB;
 
   /* See "Figure 4a. Status Register-1" in [datasheet][1].
    *
@@ -131,6 +156,22 @@ public:
   bool erase_chip();
   bool write_page(uint32_t address, uint8_t *src, uint32_t length);
   bool write_page(uint32_t address, UInt8Array src);
+
+  uint32_t jedec_id();
+  uint64_t read_unique_id();
+  uint8_t read_sfdp_register(uint8_t address);
+  bool erase_sector(uint32_t address);
+  bool erase_block_32KB(uint32_t address);
+  bool erase_block_64KB(uint32_t address);
+  void power_down();
+  void reset();
+
+  // Return from standby mode (i.e., restore after call to `power_down()`).
+  void release_powerdown();
+
+  /* Return from standby mode and read device ID (i.e., restore after call to
+   * `power_down()`). */
+  uint8_t release_powerdown_id();
 };
 
 

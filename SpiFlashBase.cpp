@@ -226,3 +226,193 @@ bool SpiFlashBase::write_page(uint32_t address, uint8_t *src, uint32_t length) {
 bool SpiFlashBase::write_page(uint32_t address, UInt8Array src) {
   return write_page(address, src.data, src.length);
 }
+
+uint32_t SpiFlashBase::jedec_id() {
+  select_chip();
+  transfer(INSTR__JEDEC_ID);
+  uint32_t result = 0;
+
+  result |= static_cast<uint32_t>(transfer(SPI__DUMMY)) << 16;  // manufacturer
+  result |= static_cast<uint32_t>(transfer(SPI__DUMMY)) << 8;  // memory_type
+  result |= transfer(SPI__DUMMY);  // capacity
+
+  deselect_chip();
+  return result;
+}
+
+uint64_t SpiFlashBase::read_unique_id() {
+  select_chip();
+  transfer(INSTR__READ_UNIQUE_ID);
+  transfer(SPI__DUMMY);
+  transfer(SPI__DUMMY);
+  transfer(SPI__DUMMY);
+  transfer(SPI__DUMMY);
+
+  uint64_t result = 0;
+
+  for (int i = sizeof(uint64_t) - 1; i >= 0; i--) {
+    result |= static_cast<uint32_t>(transfer(SPI__DUMMY)) << (8 * i);
+  }
+
+  deselect_chip();
+  return result;
+}
+
+uint8_t SpiFlashBase::read_sfdp_register(uint8_t address) {
+  select_chip();
+  transfer(INSTR__READ_SFDP_REGISTER);
+  transfer(0);
+  transfer(0);
+  uint8_t result = transfer(SPI__DUMMY);
+  deselect_chip();
+  return result;
+}
+
+bool SpiFlashBase::erase(uint32_t address, uint8_t code,
+                         uint32_t settling_time_ms) {
+  if (!ready_wait() || !enable_write()) { return false; }
+
+  select_chip();
+  transfer(address >> (2 * 8));
+  transfer(address >> (1 * 8));
+  transfer(address);
+  deselect_chip();
+
+  /* Wait for sector erase to complete.
+   *
+   * Refer to "7.6 AC Electrical Characteristics" in [`w25q64v`
+   * datasheet][1] for timings.
+   *
+   * Notes:
+   *
+   *  - `BUSY` bit in status register remains set until write is complete.
+   *  - Write enable bit in status register is cleared upon write completion.
+   *
+   * [1]: https://cdn.sparkfun.com/datasheets/Dev/Teensy/w25q64fv.pdf
+   */
+  if (!ready_wait(settling_time_ms)) {
+    disable_write();
+    return false;
+  }
+  return true;
+}
+
+bool SpiFlashBase::erase_sector(uint32_t address) {
+  /* **TODO** **TODO** **TODO** **TODO** **TODO** **TODO** **TODO** **TODO**
+   *
+   * What happens if address does not align with a sector boundary??
+   *
+   * **TODO** **TODO** **TODO** **TODO** **TODO** **TODO** **TODO** **TODO**
+   */
+  /* Wait for sector erase to complete (up to [400 milliseconds][1]).
+   *
+   * [1]: https://cdn.sparkfun.com/datasheets/Dev/Teensy/w25q64fv.pdf
+   */
+  return erase(address, INSTR__SECTOR_ERASE_4KB_, 400);
+}
+
+bool SpiFlashBase::erase_block_32KB(uint32_t address) {
+  /* **TODO** **TODO** **TODO** **TODO** **TODO** **TODO** **TODO** **TODO**
+   *
+   * What happens if address does not align with a 32KB block boundary??
+   *
+   * **TODO** **TODO** **TODO** **TODO** **TODO** **TODO** **TODO** **TODO**
+   */
+  /* Wait for sector erase to complete (up to [1600 milliseconds][1]).
+   *
+   * [1]: https://cdn.sparkfun.com/datasheets/Dev/Teensy/w25q64fv.pdf
+   */
+  return erase(address, INSTR__BLOCK_ERASE_32KB_, 1600L);
+}
+
+bool SpiFlashBase::erase_block_64KB(uint32_t address) {
+  /* **TODO** **TODO** **TODO** **TODO** **TODO** **TODO** **TODO** **TODO**
+   *
+   * What happens if address does not align with a 64KB block boundary??
+   *
+   * **TODO** **TODO** **TODO** **TODO** **TODO** **TODO** **TODO** **TODO**
+   */
+  /* Wait for sector erase to complete (up to [2000 milliseconds][1]).
+   *
+   * [1]: https://cdn.sparkfun.com/datasheets/Dev/Teensy/w25q64fv.pdf
+   */
+  return erase(address, INSTR__BLOCK_ERASE_64KB_, 2000L);
+}
+
+void SpiFlashBase::power_down() {
+  /*
+   * From section 6.2.28 of the [datasheet][1]:
+   *
+   * > While in the power-down state only the "Release from Power-down
+   * > / Device ID" instruction, which restores the device to normal
+   * > operation, will be recognized.
+   * >
+   * > **All other instructions are ignored.** This includes the Read
+   * > Status Register instruction, which is always available during
+   * > normal operation.
+   *
+   * [1]: https://cdn.sparkfun.com/datasheets/Dev/Teensy/w25q64fv.pdf
+   */
+  select_chip();
+  transfer(INSTR__POWER_DOWN);
+  deselect_chip();
+}
+
+void SpiFlashBase::reset() {
+  /* From section 6.2.43 in [`w25q64v` datasheet][1]:
+   *
+   * > To avoid accidental reset, both instructions must be issued in
+   * > sequence. Any other commands other than “Reset (99h)” after the
+   * > “Enable Reset (66h)” command will disable the “Reset Enable”
+   * > state.
+   * >
+   * > A new sequence of “Enable Reset (66h)” and “Reset (99h)” is
+   * > needed to reset the device. Once the Reset command is accepted
+   * > by the device, the device will take approximately ... 30us to
+   * > reset. During this period, no command will be accepted.
+   */
+  // Enable reset (must be done immediately before requesting reset).
+  select_chip();
+  transfer(INSTR__ENABLE_RESET);
+  deselect_chip();
+
+  // Request reset.
+  select_chip();
+  transfer(INSTR__RESET);
+  deselect_chip();
+}
+
+void SpiFlashBase::release_powerdown() {
+  select_chip();
+  transfer(INSTR__RELEASE_POWERDOWN_ID);
+  deselect_chip();
+
+  /* Wait for chip to "wake up".
+   *
+   * According to `tRES2` "7.6 AC Electrical Characteristics" in [`w25q64v`
+   * datasheet][1], this can take up to 3 microseconds.
+   *
+   * [1]: https://cdn.sparkfun.com/datasheets/Dev/Teensy/w25q64fv.pdf
+   */
+  delayMicroseconds(3);
+}
+
+uint8_t SpiFlashBase::release_powerdown_id() {
+  select_chip();
+  transfer(INSTR__RELEASE_POWERDOWN_ID);
+  transfer(SPI__DUMMY);
+  transfer(SPI__DUMMY);
+  transfer(SPI__DUMMY);
+  uint8_t device_id = transfer(SPI__DUMMY);
+  deselect_chip();
+
+  /* Wait for chip to "wake up".
+   *
+   * According to `tRES2` "7.6 AC Electrical Characteristics" in [`w25q64v`
+   * datasheet][1], this can take up to 3 microseconds.
+   *
+   * [1]: https://cdn.sparkfun.com/datasheets/Dev/Teensy/w25q64fv.pdf
+   */
+  delayMicroseconds(3);
+  return device_id;
+}
