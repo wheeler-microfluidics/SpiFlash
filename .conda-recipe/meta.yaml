@@ -6,7 +6,7 @@ source:
 package:
   name: arduino-spi-flash
 {% if GIT_DESCRIBE_NUMBER > '0' %}
-  version: {{ GIT_DESCRIBE_TAG[1:] }}.post{{ GIT_DESCRIBE_NUMBER }}
+  version: {{ GIT_DESCRIBE_TAG[1:] }}.{{ GIT_DESCRIBE_NUMBER }}
 {% else %}
   version: {{ GIT_DESCRIBE_TAG[1:] }}.0
 {% endif %}
