@@ -251,7 +251,7 @@ uint64_t SpiFlashBase::read_unique_id() {
   uint64_t result = 0;
 
   for (int i = sizeof(uint64_t) - 1; i >= 0; i--) {
-    result |= static_cast<uint32_t>(transfer(SPI__DUMMY)) << (8 * i);
+    result |= static_cast<uint64_t>(transfer(SPI__DUMMY)) << (8 * i);
   }
 
   deselect_chip();
